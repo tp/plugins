@@ -149,7 +149,8 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   /// The name of the asset is given by the [dataSource] argument and must not be
   /// null. The [package] argument must be non-null when the asset comes from a
   /// package and null otherwise.
-  VideoPlayerController.asset(this.dataSource, {this.package})
+  VideoPlayerController.asset(this.dataSource,
+      {this.package, this.mixWithOthers})
       : dataSourceType = DataSourceType.asset,
         super(VideoPlayerValue(duration: null));
 
@@ -158,7 +159,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   ///
   /// The URI for the video is given by the [dataSource] argument and must not be
   /// null.
-  VideoPlayerController.network(this.dataSource)
+  VideoPlayerController.network(this.dataSource, {this.mixWithOthers})
       : dataSourceType = DataSourceType.network,
         package = null,
         super(VideoPlayerValue(duration: null));
@@ -167,7 +168,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   ///
   /// This will load the file from the file-URI given by:
   /// `'file://${file.path}'`.
-  VideoPlayerController.file(File file)
+  VideoPlayerController.file(File file, {this.mixWithOthers})
       : dataSource = 'file://${file.path}',
         dataSourceType = DataSourceType.file,
         package = null,
@@ -175,6 +176,10 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
 
   int _textureId;
   final String dataSource;
+
+  /// True if the video audio should be in mix mode (iOS only). False to stop all other
+  /// audio playback.
+  final bool mixWithOthers;
 
   /// Describes the type of data source this [VideoPlayerController]
   /// is constructed with.
@@ -208,6 +213,11 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
       case DataSourceType.file:
         dataSourceDescription = <String, dynamic>{'uri': dataSource};
     }
+
+    if (mixWithOthers != null) {
+      await _channel.invokeMethod('setMixWithOthers', mixWithOthers);
+    }
+
     // TODO(amirh): remove this on when the invokeMethod update makes it to stable Flutter.
     // https://github.com/flutter/flutter/issues/26431
     // ignore: strong_mode_implicit_dynamic_method
@@ -236,7 +246,9 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
             size: Size(map['width']?.toDouble() ?? 0.0,
                 map['height']?.toDouble() ?? 0.0),
           );
-          initializingCompleter.complete(null);
+          if (initializingCompleter.isCompleted == false) {
+            initializingCompleter.complete(null);
+          }
           _applyLooping();
           _applyVolume();
           _applyPlayPause();
