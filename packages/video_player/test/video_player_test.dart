@@ -25,6 +25,8 @@ class FakeController extends ValueNotifier<VideoPlayerValue>
   @override
   String get dataSource => '';
   @override
+  VideoPlayerOptions videoPlayerOptions;
+  @override
   DataSourceType get dataSourceType => DataSourceType.file;
   @override
   String get package => null;
@@ -139,6 +141,27 @@ void main() {
         'uri': 'file://a.avi',
       });
     });
+  });
+
+  test('setMixWithOthers MethodChannel call', () async {
+    bool mixWithOthers = false;
+    const MethodChannel('flutter.io/videoPlayer')
+        .setMockMethodCallHandler((MethodCall methodCall) async {
+      switch (methodCall.method) {
+        case 'setMixWithOthers':
+          return mixWithOthers = methodCall.arguments;
+        case 'create':
+          return <String, dynamic>{'textureId': 100};
+        default:
+          return null;
+      }
+    });
+
+    final VideoPlayerController controller = VideoPlayerController.file(
+        File(''),
+        videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true));
+    controller.initialize();
+    expect(mixWithOthers, true);
   });
 }
 

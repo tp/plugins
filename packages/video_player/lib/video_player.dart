@@ -132,6 +132,13 @@ class VideoPlayerValue {
 
 enum DataSourceType { asset, network, file }
 
+class VideoPlayerOptions {
+  VideoPlayerOptions({this.mixWithOthers = false});
+
+  /// Set this to true to mix the video players audio with other audio sources. The default value is false.
+  final bool mixWithOthers;
+}
+
 /// Controls a platform video player, and provides updates when the state is
 /// changing.
 ///
@@ -148,7 +155,8 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   /// The name of the asset is given by the [dataSource] argument and must not be
   /// null. The [package] argument must be non-null when the asset comes from a
   /// package and null otherwise.
-  VideoPlayerController.asset(this.dataSource, {this.package})
+  VideoPlayerController.asset(this.dataSource,
+      {this.package, this.videoPlayerOptions})
       : dataSourceType = DataSourceType.asset,
         formatHint = null,
         super(VideoPlayerValue(duration: null));
@@ -160,7 +168,8 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   /// null.
   /// **Android only**: The [formatHint] option allows the caller to override
   /// the video format detection code.
-  VideoPlayerController.network(this.dataSource, {this.formatHint})
+  VideoPlayerController.network(this.dataSource,
+      {this.formatHint, this.videoPlayerOptions})
       : dataSourceType = DataSourceType.network,
         package = null,
         super(VideoPlayerValue(duration: null));
@@ -169,7 +178,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   ///
   /// This will load the file from the file-URI given by:
   /// `'file://${file.path}'`.
-  VideoPlayerController.file(File file)
+  VideoPlayerController.file(File file, {this.videoPlayerOptions})
       : dataSource = 'file://${file.path}',
         dataSourceType = DataSourceType.file,
         package = null,
@@ -179,6 +188,9 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   int _textureId;
   final String dataSource;
   final VideoFormat formatHint;
+
+  /// Provide additional configuration options (optional). Like setting the audio mode to mix
+  final VideoPlayerOptions videoPlayerOptions;
 
   /// Describes the type of data source this [VideoPlayerController]
   /// is constructed with.
@@ -216,6 +228,12 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
         dataSourceDescription = <String, dynamic>{'uri': dataSource};
         break;
     }
+
+    if (videoPlayerOptions?.mixWithOthers != null) {
+      await _channel.invokeMethod<dynamic>(
+          'setMixWithOthers', videoPlayerOptions.mixWithOthers);
+    }
+
     final Map<String, dynamic> response =
         await _channel.invokeMapMethod<String, dynamic>(
       'create',
@@ -246,7 +264,9 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
             size: Size(map['width']?.toDouble() ?? 0.0,
                 map['height']?.toDouble() ?? 0.0),
           );
-          initializingCompleter.complete(null);
+          if (initializingCompleter.isCompleted == false) {
+            initializingCompleter.complete(null);
+          }
           _applyLooping();
           _applyVolume();
           _applyPlayPause();
