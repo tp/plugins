@@ -1,3 +1,7 @@
+## 0.10.4
+
+* Introduce VideoPlayerOptions to set the audio mix mode.
+
 ## 0.10.3
 
 * Add support for the v2 Android embedding. This shouldn't impact existing
@@ -26,7 +30,7 @@
 ## 0.10.2+1
 
 * Use DefaultHttpDataSourceFactory only when network schemas and use
-DefaultHttpDataSourceFactory by default.
+  DefaultHttpDataSourceFactory by default.
 
 ## 0.10.2
 
@@ -72,7 +76,6 @@ DefaultHttpDataSourceFactory by default.
 
 * Fix a few other IDE warnings.
 
-
 ## 0.10.0+7
 
 * Android: Fix issue where buffering status in percentage instead of milliseconds
@@ -115,7 +118,7 @@ DefaultHttpDataSourceFactory by default.
 ## 0.9.0
 
 * Fixed the aspect ratio and orientation of videos. Videos are now properly displayed when recorded
- in portrait mode both in iOS and Android.
+  in portrait mode both in iOS and Android.
 
 ## 0.8.0
 
